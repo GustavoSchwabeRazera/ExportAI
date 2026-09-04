@@ -1,8 +1,8 @@
-fastapi[standard]
-pandas
-pyarrow
-pycountry
-Babel
-python-dotenv
-pytest
-httpx
+fastapi[standard]>=0.141,<1
+pandas>=2.2,<3
+pyarrow>=25,<26
+pycountry>=26,<27
+Babel>=2.18,<3
+python-dotenv>=1.2,<2
+pytest>=8,<10
+httpx>=0.28,<1

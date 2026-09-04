@@ -19,3 +19,8 @@ CORS_ORIGINS = [
     for origem in os.getenv("EXPORTAI_CORS_ORIGINS", _CORS_PADRAO).split(",")
     if origem.strip()
 ]
+
+CORS_ORIGIN_REGEX = os.getenv(
+    "EXPORTAI_CORS_ORIGIN_REGEX",
+    r"https://(.*\.)?lovable\.app|https://lovable\.dev",
+)

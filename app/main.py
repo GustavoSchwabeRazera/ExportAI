@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import API_TITLE, API_VERSION, CORS_ORIGINS
+from app.config import API_TITLE, API_VERSION, CORS_ORIGINS, CORS_ORIGIN_REGEX
 from app.errors import registrar_tratadores_erros
 from app.observability import configurar_logging, registrar_middleware_observabilidade
 from app.routes.catalogos import router as catalogos_router
@@ -17,6 +17,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    allow_origin_regex=CORS_ORIGIN_REGEX,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "Accept", "X-Request-ID"],
