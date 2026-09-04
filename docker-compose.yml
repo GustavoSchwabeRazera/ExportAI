@@ -1,0 +1,14 @@
+services:
+  exportai-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: exportai-api:0.2.0
+    container_name: exportai-api
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: "8000"
+      EXPORTAI_DATA_DIR: "/code/data"
+      EXPORTAI_CORS_ORIGINS: "${EXPORTAI_CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}"
+    restart: unless-stopped

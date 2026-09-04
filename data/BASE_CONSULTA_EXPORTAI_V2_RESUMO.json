@@ -1,0 +1,39 @@
+{
+  "referencia": {
+    "sprint": "Sprint 6 - Motor ExportAI",
+    "data_processamento": "2026-09-01",
+    "versao": "MVP_V2_COMPLETO",
+    "objetivo": "Preparar consulta dinâmica por NCM usando todos os países avaliados no HS6, sem recorte Top N prévio."
+  },
+  "fontes": {
+    "score_exportai": "dados_processados\\integracao\\motor_v3\\score_final\\score_exportai.parquet",
+    "bridge_ncm_hs6": "C:\\documentos\\diversos\\cursos\\Entra 21\\agosto\\projeto final\\sprints\\sprint6\\dados_processados\\bridge_ncm_hs6.parquet",
+    "dim_ncm": "C:\\documentos\\diversos\\cursos\\Entra 21\\agosto\\projeto final\\sprints\\sprint6\\dados_processados\\dim_ncm.parquet",
+    "dim_paises": "C:\\documentos\\diversos\\cursos\\Entra 21\\agosto\\projeto final\\sprints\\sprint6\\dados_processados\\dim_paises.parquet"
+  },
+  "saida": {
+    "pares_hs6_pais_completos": 903533,
+    "hs6_com_score": 6039,
+    "paises": 258,
+    "ncm_no_indice": 13741,
+    "hs6_no_indice": 6617,
+    "hs6_score_com_ncm_na_bridge": 5874,
+    "hs6_score_sem_ncm_na_bridge": 165
+  },
+  "qualidade": {
+    "conflitos_ncm_multiplos_hs6": 0,
+    "registros_invalidos": 0,
+    "duplicados_hs6_iso3": 0,
+    "ncm_sem_descricao": 0,
+    "pares_preservados_do_score": true
+  },
+  "metodologia": {
+    "consulta": "NCM -> HS6 -> todos os países do HS6 -> exclusão dinâmica dos países já atendidos -> ordenação por score_exportai e indice_cobertura -> seleção da quantidade solicitada.",
+    "nivel_score": "HS6 + ISO3.",
+    "ranking_armazenado": "Ranking global no HS6, antes das exclusões do usuário.",
+    "ranking_personalizado": "Deve ser calculado na consulta após as exclusões.",
+    "top_n_pre_calculado": false,
+    "expansao_integral_ncm_pais": false
+  },
+  "aprovado": true
+}

@@ -1,0 +1,18 @@
+{
+  "sprint": "Sprint 7 - Backend FastAPI",
+  "data_criacao": "2026-09-02",
+  "backend": "backend",
+  "origem_sprint6": "C:\\documentos\\diversos\\cursos\\Entra 21\\agosto\\projeto final\\sprints\\sprint6",
+  "arquivos_dados": [
+    "base_consulta_hs6_pais_completa.parquet",
+    "indice_ncm_hs6.parquet",
+    "catalogo_hs6_consulta.parquet",
+    "BASE_CONSULTA_EXPORTAI_V2_RESUMO.json"
+  ],
+  "endpoints_iniciais": [
+    "/",
+    "/health",
+    "/docs",
+    "/redoc"
+  ]
+}

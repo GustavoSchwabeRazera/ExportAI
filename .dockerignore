@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.git
+.gitignore
+.env
+.env.*
+tests
+*.log
+README.md
+MANIFESTO_ESTRUTURA.json
