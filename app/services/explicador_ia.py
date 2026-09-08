@@ -127,41 +127,74 @@ async def gerar_explicacao_ia(
     if AI_PROVIDER == "openai":
         api_key = OPENAI_API_KEY
         modelo = OPENAI_MODEL
-        endpoint = "https://api.openai.com/v1/responses"
         origem = "openai"
     else:
         api_key = GROQ_API_KEY
         modelo = GROQ_MODEL
-        endpoint = "https://api.groq.com/openai/v1/responses"
         origem = "groq"
 
     if not api_key:
         return fallback, "fallback_local"
 
-    payload = {
-        "model": modelo,
-        "store": False,
-        "temperature": 0.2,
-        "max_output_tokens": 280,
-        "input": _montar_prompt(consulta, recomendacao),
-    }
-
     try:
         async with httpx.AsyncClient(timeout=AI_TIMEOUT_SECONDS) as client:
-            resposta = await client.post(
-                endpoint,
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                json=payload,
-            )
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+
+            if origem == "groq":
+                # A Groq usa a API OpenAI-compatible de Chat Completions.
+                resposta = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers=headers,
+                    json={
+                        "model": modelo,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": (
+                                    "Você é um analista de comércio exterior. "
+                                    "Explique sem inventar dados."
+                                ),
+                            },
+                            {
+                                "role": "user",
+                                "content": _montar_prompt(consulta, recomendacao),
+                            },
+                        ],
+                        "temperature": 0.2,
+                        "max_completion_tokens": 280,
+                    },
+                )
+            else:
+                resposta = await client.post(
+                    "https://api.openai.com/v1/responses",
+                    headers=headers,
+                    json={
+                        "model": modelo,
+                        "store": False,
+                        "temperature": 0.2,
+                        "max_output_tokens": 280,
+                        "input": _montar_prompt(consulta, recomendacao),
+                    },
+                )
+
             resposta.raise_for_status()
             dados = resposta.json()
     except Exception:
         return fallback, "fallback_local"
 
-    texto = str(dados.get("output_text") or "").strip()
+    if origem == "groq":
+        escolhas = dados.get("choices") or []
+        texto = ""
+        if escolhas:
+            texto = str(
+                escolhas[0].get("message", {}).get("content") or ""
+            ).strip()
+    else:
+        texto = str(dados.get("output_text") or "").strip()
+
     if not texto:
         return fallback, "fallback_local"
     return texto, origem

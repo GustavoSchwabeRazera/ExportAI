@@ -32,7 +32,7 @@ O endpoint `/api/v1/explicacao` recebe uma recomendacao ja calculada pelo motor
 ExportAI e gera uma explicacao em linguagem natural. A IA nao recalcula o score,
 nao altera o ranking e nao inventa dados fora do JSON recebido.
 
-Por padrao, o backend tenta usar a Groq, que oferece plano Free com limites. Se
+Por padrao, o backend tenta usar a Groq via Chat Completions API, que oferece plano Free com limites. Se
 `GROQ_API_KEY` nao estiver configurada, ou se a chamada falhar/atingir limite,
 o backend usa uma explicacao local deterministica para o app continuar
 funcionando.
