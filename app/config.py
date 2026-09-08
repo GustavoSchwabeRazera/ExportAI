@@ -19,3 +19,17 @@ CORS_ORIGINS = [
     for origem in os.getenv("EXPORTAI_CORS_ORIGINS", _CORS_PADRAO).split(",")
     if origem.strip()
 ]
+
+CORS_ORIGIN_REGEX = os.getenv(
+    "EXPORTAI_CORS_ORIGIN_REGEX",
+    r"https://(.*\.)?lovable\.app|https://lovable\.dev",
+)
+
+AI_PROVIDER = os.getenv("EXPORTAI_AI_PROVIDER", "groq").strip().lower()
+AI_TIMEOUT_SECONDS = float(os.getenv("EXPORTAI_AI_TIMEOUT_SECONDS", "12"))
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5")

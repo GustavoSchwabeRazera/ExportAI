@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import API_TITLE, API_VERSION, CORS_ORIGINS
+from app.config import API_TITLE, API_VERSION, CORS_ORIGINS, CORS_ORIGIN_REGEX
 from app.errors import registrar_tratadores_erros
 from app.observability import configurar_logging, registrar_middleware_observabilidade
 from app.routes.catalogos import router as catalogos_router
+from app.routes.explicacao import router as explicacao_router
 from app.routes.health import router as health_router
 from app.routes.recomendacoes import router as recomendacoes_router
 
@@ -17,6 +18,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    allow_origin_regex=CORS_ORIGIN_REGEX,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "Accept", "X-Request-ID"],
@@ -27,6 +29,7 @@ registrar_tratadores_erros(app)
 app.include_router(health_router)
 app.include_router(catalogos_router)
 app.include_router(recomendacoes_router)
+app.include_router(explicacao_router)
 
 
 @app.get("/", tags=["Raiz"], summary="Apresenta a API")
@@ -38,5 +41,6 @@ def raiz():
         "documentacao": "/docs",
         "health": "/health",
         "recomendacoes": "/api/v1/recomendacoes",
+        "explicacao": "/api/v1/explicacao",
         "paises": "/api/v1/paises",
     }
