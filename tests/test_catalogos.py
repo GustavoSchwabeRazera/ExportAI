@@ -62,9 +62,43 @@ def test_hs6_invalido_retorna_400():
     assert resposta.json()["erro"]["codigo"] == "CODIGO_INVALIDO"
 
 
+def test_busca_produtos_por_descricao():
+    resposta = client.get("/api/v1/produtos", params={"q": "camiseta algodao"})
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["total"] > 0
+    sugestao = corpo["resultados"][0]
+    assert sugestao["tipo_codigo"] == "NCM"
+    assert sugestao["codigo"] == "61091000"
+    assert sugestao["ncm"] == "61091000"
+    assert sugestao["hs6"] == "610910"
+    assert "Camisetas" in sugestao["descricao"]
+
+
+def test_busca_produtos_por_ncm():
+    resposta = client.get("/api/v1/produtos", params={"q": "09.01.11.10"})
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["total"] == 1
+    sugestao = corpo["resultados"][0]
+    assert sugestao["tipo_codigo"] == "NCM"
+    assert sugestao["codigo"] == "09011110"
+    assert sugestao["hs6"] == "090111"
+
+
+def test_busca_produtos_por_sh6_hs6():
+    resposta = client.get("/api/v1/produtos", params={"q": "610910"})
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["total"] >= 1
+    assert all(item["tipo_codigo"] == "HS6" for item in corpo["resultados"])
+    assert all(item["codigo"] == "610910" for item in corpo["resultados"])
+
+
 def test_openapi_documenta_catalogos():
     openapi = client.get("/openapi.json").json()
     caminhos = openapi["paths"]
     assert "/api/v1/paises" in caminhos
+    assert "/api/v1/produtos" in caminhos
     assert "/api/v1/ncm/{ncm}" in caminhos
     assert "/api/v1/hs6/{hs6}" in caminhos

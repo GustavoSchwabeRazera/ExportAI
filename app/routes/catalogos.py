@@ -1,15 +1,18 @@
 from functools import lru_cache
 import json
 import re
+import unicodedata
 
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path, Query
 
 from app.catalog_schemas import (
+    BuscaProdutosResponse,
     HS6InfoResponse,
     ListaPaisesResponse,
     NCMInfoResponse,
     PaisCatalogo,
+    ProdutoSugestao,
 )
 from app.config import BASE_CONSULTA, CATALOGO_HS6, DATA_DIR, INDICE_NCM_HS6
 from app.presentation import nome_pais_portugues
@@ -41,6 +44,14 @@ def normalizar_codigo(valor: str, tamanho: int, nome: str) -> str:
     return digitos
 
 
+def normalizar_texto_busca(valor: str) -> str:
+    texto = unicodedata.normalize("NFKD", str(valor).strip())
+    texto = "".join(c for c in texto if not unicodedata.combining(c))
+    texto = texto.casefold()
+    texto = re.sub(r"[^a-z0-9]+", " ", texto)
+    return re.sub(r"\s+", " ", texto).strip()
+
+
 @lru_cache(maxsize=1)
 def carregar_indice() -> pd.DataFrame:
     df = pd.read_parquet(INDICE_NCM_HS6).copy()
@@ -54,6 +65,37 @@ def carregar_catalogo_hs6() -> pd.DataFrame:
     df = pd.read_parquet(CATALOGO_HS6).copy()
     df["HS6"] = df["HS6"].astype("string").str.zfill(6)
     return df
+
+
+@lru_cache(maxsize=1)
+def carregar_catalogo_produtos() -> pd.DataFrame:
+    indice = carregar_indice()
+    catalogo = carregar_catalogo_hs6()
+    colunas_catalogo = [
+        "HS6",
+        "paises_avaliados",
+        "tem_score_exportai",
+    ]
+    disponiveis = [coluna for coluna in colunas_catalogo if coluna in catalogo.columns]
+    produtos = indice.merge(
+        catalogo[disponiveis].drop_duplicates("HS6"),
+        on="HS6",
+        how="left",
+    )
+    produtos["descricao_ncm"] = produtos.get(
+        "descricao_ncm",
+        pd.Series(dtype="string"),
+    ).fillna("").astype(str)
+    produtos["descricao_busca"] = produtos["descricao_ncm"].map(normalizar_texto_busca)
+    produtos["tem_score_exportai"] = produtos.get(
+        "tem_score_exportai",
+        pd.Series(False, index=produtos.index),
+    ).fillna(False).astype(bool)
+    produtos["paises_avaliados"] = produtos.get(
+        "paises_avaliados",
+        pd.Series(0, index=produtos.index),
+    ).fillna(0).astype(int)
+    return produtos
 
 
 @lru_cache(maxsize=1)
@@ -89,6 +131,22 @@ def texto(valor):
     return None if pd.isna(valor) else str(valor)
 
 
+def montar_sugestao_produto(linha: pd.Series, tipo_codigo: str) -> ProdutoSugestao:
+    ncm = texto(linha.get("NCM"))
+    hs6 = str(linha.get("HS6")).zfill(6)
+    codigo = ncm if tipo_codigo == "NCM" and ncm else hs6
+    descricao = texto(linha.get("descricao_ncm")) or f"Produto SH6/HS6 {hs6}"
+    return ProdutoSugestao(
+        tipo_codigo=tipo_codigo,
+        codigo=str(codigo),
+        ncm=ncm,
+        hs6=hs6,
+        descricao=descricao,
+        existe_no_motor=bool(linha.get("tem_score_exportai", False)),
+        paises_avaliados=inteiro(linha.get("paises_avaliados", 0)),
+    )
+
+
 @router.get(
     "/paises",
     response_model=ListaPaisesResponse,
@@ -103,6 +161,75 @@ def listar_paises() -> ListaPaisesResponse:
         raise HTTPException(
             status_code=500,
             detail=erro("CATALOGO_PAISES_INDISPONIVEL", str(exc)),
+        ) from exc
+
+
+@router.get(
+    "/produtos",
+    response_model=BuscaProdutosResponse,
+    responses={500: RESPOSTAS_ERRO[500]},
+    summary="Busca produtos por nome, NCM ou SH6/HS6",
+    description=(
+        "Retorna sugestoes para autocomplete. O usuario pode digitar parte da "
+        "descricao do produto, uma NCM de 8 digitos ou um SH6/HS6 de 6 digitos."
+    ),
+)
+def buscar_produtos(
+    q: str = Query(min_length=1, max_length=80, description="Texto, NCM ou SH6/HS6."),
+    limite: int = Query(default=10, ge=1, le=30),
+) -> BuscaProdutosResponse:
+    try:
+        produtos = carregar_catalogo_produtos()
+        termo = normalizar_texto_busca(q)
+        digitos = re.sub(r"\D", "", q)
+
+        if len(digitos) == 8:
+            candidatos = produtos.loc[produtos["NCM"].eq(digitos)].copy()
+            candidatos["prioridade_busca"] = 0
+            tipo_codigo = "NCM"
+        elif len(digitos) == 6:
+            candidatos = produtos.loc[produtos["HS6"].eq(digitos)].copy()
+            candidatos["prioridade_busca"] = 0
+            tipo_codigo = "HS6"
+        elif len(termo) < 2:
+            return BuscaProdutosResponse(total=0, resultados=[])
+        else:
+            termos = termo.split()
+            mascara = pd.Series(True, index=produtos.index)
+            for palavra in termos:
+                mascara = mascara & produtos["descricao_busca"].str.contains(
+                    re.escape(palavra),
+                    na=False,
+                    regex=True,
+                )
+            candidatos = produtos.loc[mascara].copy()
+            if candidatos.empty:
+                return BuscaProdutosResponse(total=0, resultados=[])
+            candidatos["prioridade_busca"] = candidatos["descricao_busca"].map(
+                lambda descricao: 0 if descricao.startswith(termo) else 1
+            )
+            tipo_codigo = "NCM"
+
+        candidatos = candidatos.sort_values(
+            [
+                "prioridade_busca",
+                "tem_score_exportai",
+                "paises_avaliados",
+                "NCM",
+            ],
+            ascending=[True, False, False, True],
+            kind="mergesort",
+        ).head(limite)
+
+        resultados = [
+            montar_sugestao_produto(linha, tipo_codigo)
+            for _, linha in candidatos.iterrows()
+        ]
+        return BuscaProdutosResponse(total=len(resultados), resultados=resultados)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=erro("BUSCA_PRODUTOS_INDISPONIVEL", str(exc)),
         ) from exc
 
 

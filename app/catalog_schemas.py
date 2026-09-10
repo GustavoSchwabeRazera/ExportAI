@@ -34,3 +34,18 @@ class HS6InfoResponse(CatalogoSchema):
     score_maximo: float | None = Field(default=None, ge=0, le=100)
     tem_ncm_na_bridge: bool
     tem_score_exportai: bool
+
+
+class ProdutoSugestao(CatalogoSchema):
+    tipo_codigo: str = Field(pattern=r"^(NCM|HS6)$")
+    codigo: str = Field(pattern=r"^\d{6}$|^\d{8}$")
+    ncm: str | None = Field(default=None, pattern=r"^\d{8}$")
+    hs6: str = Field(pattern=r"^\d{6}$")
+    descricao: str
+    existe_no_motor: bool
+    paises_avaliados: int = Field(ge=0)
+
+
+class BuscaProdutosResponse(CatalogoSchema):
+    total: int = Field(ge=0)
+    resultados: list[ProdutoSugestao]

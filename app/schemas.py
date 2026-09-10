@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 NCM = Annotated[str, StringConstraints(strip_whitespace=True, pattern=r"^\d{8}$")]
@@ -30,6 +30,22 @@ class ConsultaRecomendacaoRequest(SchemaBase):
     quantidade: int = Field(default=5, ge=1, le=258)
     confianca_minima: Confianca = "LIMITADA"
     somente_novas: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def aceitar_sh6_como_alias_de_hs6(cls, dados: Any) -> Any:
+        """Aceita SH6 no JSON de entrada como sinônimo brasileiro de HS6."""
+        if not isinstance(dados, dict) or "sh6" not in dados:
+            return dados
+
+        dados_normalizados = dict(dados)
+        sh6 = dados_normalizados.pop("sh6")
+        hs6 = dados_normalizados.get("hs6")
+        if hs6 not in (None, ""):
+            raise ValueError("Informe apenas um campo de 6 digitos: hs6 ou sh6.")
+
+        dados_normalizados["hs6"] = sh6
+        return dados_normalizados
 
     @field_validator("ncm", mode="before")
     @classmethod

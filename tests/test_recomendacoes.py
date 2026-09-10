@@ -50,6 +50,36 @@ def test_recomendacao_por_hs6():
     assert all(item["faixa_confianca"] == "ALTA" for item in corpo["recomendacoes"])
 
 
+def test_recomendacao_por_sh6():
+    resposta = client.post(
+        ENDPOINT,
+        json={
+            "sh6": "090111",
+            "quantidade": 3,
+            "confianca_minima": "ALTA",
+        },
+    )
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["consulta"]["ncm"] is None
+    assert corpo["consulta"]["hs6"] == "090111"
+    assert len(corpo["recomendacoes"]) == 3
+
+
+def test_brasil_nunca_aparece_como_recomendacao():
+    resposta = client.post(
+        ENDPOINT,
+        json={
+            "hs6": "090111",
+            "quantidade": 258,
+            "confianca_minima": "LIMITADA",
+        },
+    )
+    assert resposta.status_code == 200
+    iso3_retornados = {item["ISO3"] for item in resposta.json()["recomendacoes"]}
+    assert "BRA" not in iso3_retornados
+
+
 def test_recomendacao_somente_novas():
     resposta = client.post(
         ENDPOINT,

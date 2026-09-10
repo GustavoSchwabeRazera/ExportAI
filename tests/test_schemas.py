@@ -32,13 +32,21 @@ def test_request_hs6_valido():
     assert entrada.ncm is None
 
 
+def test_request_sh6_valido_como_alias_de_hs6():
+    entrada = ConsultaRecomendacaoRequest(sh6="09.01.11")
+    assert entrada.hs6 == "090111"
+    assert entrada.ncm is None
+
+
 @pytest.mark.parametrize(
     "dados",
     [
         {},
         {"ncm": "09011110", "hs6": "090111"},
+        {"hs6": "090111", "sh6": "090111"},
         {"ncm": "123"},
         {"hs6": "123"},
+        {"sh6": "123"},
         {"ncm": "09011110", "quantidade": 0},
         {"ncm": "09011110", "quantidade": 259},
         {"ncm": "09011110", "confianca_minima": "MEDIA"},

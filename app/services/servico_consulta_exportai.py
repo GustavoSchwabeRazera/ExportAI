@@ -22,6 +22,7 @@ BASE_PADRAO = CONSULTA_DIR / "base_consulta_hs6_pais_completa.parquet"
 INDICE_PADRAO = CONSULTA_DIR / "indice_ncm_hs6.parquet"
 
 ORDEM_CONFIANCA = {"LIMITADA": 1, "MODERADA": 2, "ALTA": 3}
+PAISES_BLOQUEADOS_ISO3 = {"BRA"}
 
 ALIASES_MANUAIS = {
     "eua": "USA",
@@ -381,8 +382,9 @@ class ServicoConsultaExportAI:
             candidatos,
             paises_excluidos or (),
         )
+        excluidos_aplicados = excluidos | PAISES_BLOQUEADOS_ISO3
         candidatos = candidatos.loc[
-            ~candidatos["ISO3"].isin(excluidos)
+            ~candidatos["ISO3"].isin(excluidos_aplicados)
         ].copy()
         total_apos_exclusoes = int(len(candidatos))
 
