@@ -100,12 +100,15 @@ def gerar_explicacao_deterministica(
 
 def _montar_prompt(consulta: dict[str, Any], recomendacao: dict[str, Any]) -> str:
     return (
-        "Explique a recomendação abaixo para um usuário brasileiro de comércio "
-        "exterior. Use somente os dados fornecidos. Não invente tarifas, acordos, "
-        "notícias, tendências externas, score nem posição no ranking. Não trate o "
-        "resultado como garantia de venda; trate como indicação baseada em dados. "
+        "Explique a recomendaçao abaixo para um usuario brasileiro de comercio "
+        "exterior. Use somente os dados fornecidos. Nao invente tarifas, acordos, "
+        "noticias, tendencias externas, score nem posiçao no ranking. Nao trate o "
+        "resultado como garantia de venda; trate como indicaçao baseada em dados. "
         "Se houver dado imputado, acordo neutro ou confiança limitada, avise de "
-        "forma clara. Seja objetivo, com 1 ou 2 parágrafos.\n\n"
+        "forma clara. Seja objetivo, com 1 ou 2 parágrafos."
+        "Nao interprete VL_FOB como previsao de faturamento do usuario. "
+        "VL_FOB representa valor historico/agregado da base, nao valor estimado "
+        "para a quantidade informada na busca. \n\n"
         f"Consulta: {consulta}\n"
         f"Recomendação: {recomendacao}\n"
         f"Pesos do score: {PESOS_SCORE}"
