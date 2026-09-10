@@ -1,4 +1,5 @@
 from functools import lru_cache
+import json
 import re
 
 import pandas as pd
@@ -10,7 +11,7 @@ from app.catalog_schemas import (
     NCMInfoResponse,
     PaisCatalogo,
 )
-from app.config import BASE_CONSULTA, CATALOGO_HS6, INDICE_NCM_HS6
+from app.config import BASE_CONSULTA, CATALOGO_HS6, DATA_DIR, INDICE_NCM_HS6
 from app.presentation import nome_pais_portugues
 from app.schemas import ErroResponse
 
@@ -57,11 +58,19 @@ def carregar_catalogo_hs6() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def carregar_paises() -> ListaPaisesResponse:
-    df = pd.read_parquet(BASE_CONSULTA, columns=["ISO3", "pais"])
-    df["ISO3"] = df["ISO3"].astype("string").str.upper()
-    df = df.dropna(subset=["ISO3"]).drop_duplicates("ISO3")
+    catalogo_json = DATA_DIR / "catalogo_paises.json"
     itens = []
-    for iso3, nome_atual in df[["ISO3", "pais"]].itertuples(index=False):
+    if catalogo_json.exists():
+        registros = json.loads(catalogo_json.read_text(encoding="utf-8"))
+    else:
+        df = pd.read_parquet(BASE_CONSULTA, columns=["ISO3", "pais"])
+        df["ISO3"] = df["ISO3"].astype("string").str.upper()
+        df = df.dropna(subset=["ISO3"]).drop_duplicates("ISO3")
+        registros = df[["ISO3", "pais"]].to_dict(orient="records")
+
+    for registro in registros:
+        iso3 = registro.get("ISO3")
+        nome_atual = registro.get("pais")
         nome = nome_pais_portugues(str(iso3), nome_atual)
         itens.append(PaisCatalogo(iso3=str(iso3), nome=nome or str(iso3)))
     itens.sort(key=lambda item: item.nome.casefold())

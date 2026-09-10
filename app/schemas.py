@@ -126,6 +126,17 @@ class ConsultaRecomendacaoResponse(SchemaBase):
     metodologia: MetodologiaInfo
     recomendacoes: list[RecomendacaoPais]
 
+
+class ExplicacaoRequest(SchemaBase):
+    consulta: ConsultaInfo
+    recomendacao: RecomendacaoPais
+
+
+class ExplicacaoResponse(SchemaBase):
+    explicacao: str = Field(min_length=1)
+    origem: Literal["groq", "openai", "fallback_local"]
+    aviso: str
+
 class ErroDetalhe(SchemaBase):
     codigo: str
     mensagem: str
