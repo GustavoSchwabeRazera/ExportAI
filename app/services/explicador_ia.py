@@ -131,7 +131,6 @@ def _montar_prompt(consulta: dict[str, Any], recomendacao: dict[str, Any]) -> st
         "'alta demanda garantida' ou 'faturamento estimado'.\n\n"
 
         "Formato desejado:\n"
-        "Colocação no ranking"
         " Explique por que o país apareceu bem ranqueado, em linguagem simples.\n"
         " Cite os fatores gerais que contribuíram para a recomendação, sem números.\n"
         " Termine lembrando que a IA apenas explica os dados calculados pelo "
