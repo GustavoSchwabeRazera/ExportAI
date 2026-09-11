@@ -112,6 +112,7 @@ def _montar_prompt(consulta: dict[str, Any], recomendacao: dict[str, Any]) -> st
         "calculado pelo motor.\n"
         "- O campo score_exportai é a pontuação final calculada pelo sistema.\n"
         "- Os campos score_comex_usado, score_wits_usado, score_economico_usado, "
+        "- não informe numero algum\n"
         "score_futuro_usado e score_acordo_usado são os componentes usados no "
         "score.\n"
         "- VL_FOB representa valor histórico/agregado da base de comércio exterior, "
