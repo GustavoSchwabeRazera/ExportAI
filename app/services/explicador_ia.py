@@ -125,6 +125,7 @@ def _montar_prompt(consulta: dict[str, Any], recomendacao: dict[str, Any]) -> st
         "ou valor FOB.\n"
         "- Não diga que um acordo comercial existe se o campo de acordos estiver "
         "neutro ou ausente.\n"
+        "- Não aumente valores\n"
         "- Não diga que não há restrições comerciais; diga apenas o que os dados "
         "informam.\n"
         "- Evite linguagem exagerada como 'mercado garantido', 'venda certa', "
