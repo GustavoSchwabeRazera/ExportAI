@@ -236,7 +236,53 @@ class ServicoConsultaExportAI:
         candidatos["ISO3"] = (
             candidatos["ISO3"].astype("string").str.upper()
         )
+        self._aplicar_scores_v2(candidatos)
+        self._recalcular_ranking_global(candidatos)
         return candidatos
+
+    @staticmethod
+    def _substituir_por_v2(
+        candidatos: pd.DataFrame,
+        coluna_destino: str,
+        coluna_v2: str,
+    ) -> None:
+        if coluna_v2 not in candidatos.columns or coluna_destino not in candidatos.columns:
+            return
+
+        valores_v2 = pd.to_numeric(candidatos[coluna_v2], errors="coerce")
+        valores_atuais = pd.to_numeric(candidatos[coluna_destino], errors="coerce")
+        candidatos[coluna_destino] = valores_atuais.mask(
+            valores_v2.notna(),
+            valores_v2,
+        )
+
+    def _aplicar_scores_v2(self, candidatos: pd.DataFrame) -> None:
+        """
+        Usa os scores recalibrados v2 como valores oficiais da API.
+
+        O frontend continua recebendo os nomes antigos, como score_exportai,
+        para preservar compatibilidade com o Lovable.
+        """
+        self._substituir_por_v2(candidatos, "score_exportai", "score_exportai_v2")
+        self._substituir_por_v2(candidatos, "score_wits_usado", "score_wits_v2")
+        self._substituir_por_v2(candidatos, "score_futuro_usado", "score_futuro_v2")
+        self._substituir_por_v2(candidatos, "score_acordo_usado", "score_acordo_v2")
+
+    @staticmethod
+    def _recalcular_ranking_global(candidatos: pd.DataFrame) -> None:
+        ordenados = candidatos.sort_values(
+            [
+                "score_exportai",
+                "indice_cobertura",
+                "ISO3",
+            ],
+            ascending=[False, False, True],
+            kind="mergesort",
+        )
+        candidatos.loc[
+            ordenados.index,
+            "ranking_global_no_hs6",
+        ] = range(1, len(ordenados) + 1)
 
     def _resolver_codigo(
         self,
@@ -467,12 +513,12 @@ class ServicoConsultaExportAI:
                 "recomendacoes_retornadas": int(len(recomendacoes)),
             },
             "metodologia": {
-                "fonte": "base completa HS6 + pais",
+                "fonte": "base completa HS6 + pais, usando score_exportai_v2 quando disponivel",
                 "exclusao_antes_da_ordenacao": True,
                 "ranking_personalizado_recalculado": True,
                 "pais_excluido_reintroduzido": False,
                 "ordenacao": [
-                    "score_exportai desc",
+                    "score_exportai desc (preenchido por score_exportai_v2 quando disponivel)",
                     "indice_cobertura desc",
                     "ranking_global_no_hs6 asc",
                     "ISO3 asc",

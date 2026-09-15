@@ -31,10 +31,11 @@ def test_paises_retornam_em_portugues():
     resposta = client.post(ENDPOINT, json={
         "ncm": "09011110",
         "paises_ja_exportados": ["Argentina", "Estados Unidos", "Chile"],
-        "quantidade": 5,
+        "quantidade": 258,
     })
     assert resposta.status_code == 200
     nomes = {item["ISO3"]: item["pais"] for item in resposta.json()["recomendacoes"]}
+    assert "BRA" not in nomes
     assert nomes["DEU"] == "Alemanha"
     assert nomes["ITA"] == "Itália"
     assert nomes["SGP"] == "Singapura"

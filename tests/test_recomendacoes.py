@@ -1,5 +1,7 @@
+import pandas as pd
 from fastapi.testclient import TestClient
 
+from app.config import BASE_CONSULTA
 from app.main import app
 
 client = TestClient(app)
@@ -64,6 +66,36 @@ def test_recomendacao_por_sh6():
     assert corpo["consulta"]["ncm"] is None
     assert corpo["consulta"]["hs6"] == "090111"
     assert len(corpo["recomendacoes"]) == 3
+
+
+def test_recomendacao_usa_score_exportai_v2_quando_disponivel():
+    resposta = client.post(
+        ENDPOINT,
+        json={
+            "hs6": "090111",
+            "quantidade": 1,
+            "confianca_minima": "LIMITADA",
+        },
+    )
+    assert resposta.status_code == 200
+    recomendacao = resposta.json()["recomendacoes"][0]
+
+    base = pd.read_parquet(
+        BASE_CONSULTA,
+        filters=[[("HS6", "==", "090111")]],
+    )
+    base = base.loc[base["ISO3"].astype(str).str.upper().ne("BRA")].copy()
+    valores_v2 = pd.to_numeric(base["score_exportai_v2"], errors="coerce")
+    valores_atuais = pd.to_numeric(base["score_exportai"], errors="coerce")
+    base["score_esperado"] = valores_atuais.mask(valores_v2.notna(), valores_v2)
+    esperado = base.sort_values(
+        ["score_esperado", "indice_cobertura", "ISO3"],
+        ascending=[False, False, True],
+        kind="mergesort",
+    ).iloc[0]
+
+    assert recomendacao["ISO3"] == esperado["ISO3"]
+    assert recomendacao["score_exportai"] == esperado["score_esperado"]
 
 
 def test_brasil_nunca_aparece_como_recomendacao():
