@@ -163,6 +163,7 @@ class ErroResponse(SchemaBase):
 
 class HealthArquivos(SchemaBase):
     base_consulta: bool
+    base_consulta_api: bool | None = None
     indice_ncm_hs6: bool
     catalogo_hs6: bool
 
