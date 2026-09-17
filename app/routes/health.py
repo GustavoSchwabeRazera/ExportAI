@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends
 
-from app.config import BASE_CONSULTA, BASE_CONSULTA_API, CATALOGO_HS6, INDICE_NCM_HS6
+from app.config import BASE_CONSULTA, CATALOGO_HS6, INDICE_NCM_HS6
 from app.dependencies import get_servico_exportai
 from app.services.servico_consulta_exportai import ServicoConsultaExportAI
 
@@ -14,9 +14,8 @@ def health(
     servico: ServicoConsultaExportAI = Depends(get_servico_exportai),
 ) -> dict:
     arquivos = {
-            "base_consulta": BASE_CONSULTA.exists(),
-            "base_consulta_api": BASE_CONSULTA_API.exists(),
-            "indice_ncm_hs6": INDICE_NCM_HS6.exists(),
+        "base_consulta": BASE_CONSULTA.exists(),
+        "indice_ncm_hs6": INDICE_NCM_HS6.exists(),
         "catalogo_hs6": CATALOGO_HS6.exists(),
     }
     saudavel = all(arquivos.values()) and servico is not None
