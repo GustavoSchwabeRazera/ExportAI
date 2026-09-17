@@ -399,15 +399,11 @@ class ServicoConsultaExportAI:
         candidatos: pd.DataFrame,
         termos: Iterable[str],
     ) -> tuple[set[str], list[str]]:
-        termos_lista = [str(termo) for termo in termos if str(termo).strip()]
-        if not termos_lista:
-            return set(), []
-
         mapa = self._gerar_aliases(candidatos)
         reconhecidos: set[str] = set()
         nao_reconhecidos: list[str] = []
 
-        for termo in termos_lista:
+        for termo in termos:
             codigo = mapa.get(self._normalizar_texto(termo))
             if codigo:
                 reconhecidos.add(codigo)
@@ -474,12 +470,6 @@ class ServicoConsultaExportAI:
         if somente_novas:
             candidatos = candidatos.loc[
                 candidatos["tipo_oportunidade"].eq(
-                    "NOVA_OPORTUNIDADE_WITS"
-                )
-            ].copy()
-        else:
-            candidatos = candidatos.loc[
-                ~candidatos["tipo_oportunidade"].eq(
                     "NOVA_OPORTUNIDADE_WITS"
                 )
             ].copy()

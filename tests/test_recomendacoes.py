@@ -85,9 +85,6 @@ def test_recomendacao_usa_score_exportai_v2_quando_disponivel():
         filters=[[("HS6", "==", "090111")]],
     )
     base = base.loc[base["ISO3"].astype(str).str.upper().ne("BRA")].copy()
-    base = base.loc[
-        ~base["tipo_oportunidade"].eq("NOVA_OPORTUNIDADE_WITS")
-    ].copy()
     valores_v2 = pd.to_numeric(base["score_exportai_v2"], errors="coerce")
     valores_atuais = pd.to_numeric(base["score_exportai"], errors="coerce")
     base["score_esperado"] = valores_atuais.mask(valores_v2.notna(), valores_v2)
@@ -99,25 +96,6 @@ def test_recomendacao_usa_score_exportai_v2_quando_disponivel():
 
     assert recomendacao["ISO3"] == esperado["ISO3"]
     assert recomendacao["score_exportai"] == esperado["score_esperado"]
-
-
-def test_recomendacao_padrao_nao_exibe_novas_oportunidades():
-    resposta = client.post(
-        ENDPOINT,
-        json={
-            "hs6": "090111",
-            "quantidade": 20,
-            "confianca_minima": "LIMITADA",
-            "somente_novas": False,
-        },
-    )
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["recomendacoes"]
-    assert all(
-        item["tipo_oportunidade"] != "NOVA_OPORTUNIDADE_WITS"
-        for item in corpo["recomendacoes"]
-    )
 
 
 def test_brasil_nunca_aparece_como_recomendacao():
