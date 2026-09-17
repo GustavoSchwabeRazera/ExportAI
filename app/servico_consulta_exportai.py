@@ -22,32 +22,6 @@ BASE_PADRAO = CONSULTA_DIR / "base_consulta_hs6_pais_completa.parquet"
 INDICE_PADRAO = CONSULTA_DIR / "indice_ncm_hs6.parquet"
 
 ORDEM_CONFIANCA = {"LIMITADA": 1, "MODERADA": 2, "ALTA": 3}
-PAISES_BLOQUEADOS_ISO3 = {"BRA"}
-COLUNAS_CONSULTA = [
-    "HS6",
-    "ISO3",
-    "pais",
-    "score_exportai",
-    "score_exportai_v2",
-    "indice_cobertura",
-    "faixa_confianca",
-    "tipo_oportunidade",
-    "ranking_global_no_hs6",
-    "motivo_recomendacao",
-    "aviso_confianca",
-    "score_comex_usado",
-    "score_wits_usado",
-    "score_wits_v2",
-    "score_economico_usado",
-    "score_futuro_usado",
-    "score_futuro_v2",
-    "score_acordo_usado",
-    "score_acordo_v2",
-    "comex_imputado",
-    "wits_imputado",
-    "acordo_neutro",
-    "VL_FOB",
-]
 
 ALIASES_MANUAIS = {
     "eua": "USA",
@@ -228,15 +202,11 @@ class ServicoConsultaExportAI:
         try:
             candidatos = pd.read_parquet(
                 self.caminho_base,
-                columns=COLUNAS_CONSULTA,
                 filters=[[('HS6', '==', hs6)]],
             )
         except Exception:
             if self._base_cache is None:
-                self._base_cache = pd.read_parquet(
-                    self.caminho_base,
-                    columns=COLUNAS_CONSULTA,
-                )
+                self._base_cache = pd.read_parquet(self.caminho_base)
             candidatos = self._base_cache.loc[
                 self._base_cache["HS6"].astype("string").eq(hs6)
             ].copy()
@@ -457,9 +427,8 @@ class ServicoConsultaExportAI:
             candidatos,
             paises_excluidos or (),
         )
-        excluidos_aplicados = excluidos | PAISES_BLOQUEADOS_ISO3
         candidatos = candidatos.loc[
-            ~candidatos["ISO3"].isin(excluidos_aplicados)
+            ~candidatos["ISO3"].isin(excluidos)
         ].copy()
         total_apos_exclusoes = int(len(candidatos))
 
