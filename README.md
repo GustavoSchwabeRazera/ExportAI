@@ -10,9 +10,9 @@ O **ExportAI** é composto por serviços e módulos independentes:
 
 | Módulo | Descrição | Repositório |
 | :--- | :--- | :--- |
-| ⚡ **Backend Principal** | API REST em FastAPI e Health Checks | *(Este repositório)* |
-| 📊 **Módulo de Vendas** | Análise, métricas e histórico de vendas | [GustavoSchwabeRazera/ModuloVendas](https://github.com/GustavoSchwabeRazera/ModuloVendas) |
-| 🔍 **Módulo de Diagnóstico** | Diagnóstico do perfil exportador e scoring | [GustavoSchwabeRazera/ModuloDiagnostico](https://github.com/GustavoSchwabeRazera/ModuloDiagnostico) |
+| ⚡ **Backend Principal** | *(Este repositório)* |
+| 📊 **Módulo de Vendas**  | [GustavoSchwabeRazera/ModuloVendas](https://github.com/GustavoSchwabeRazera/ModuloVendas) |
+| 🔍 **Módulo de Diagnóstico** | [GustavoSchwabeRazera/ModuloDiagnostico](https://github.com/GustavoSchwabeRazera/ModuloDiagnostico) |
 
 ---
 
