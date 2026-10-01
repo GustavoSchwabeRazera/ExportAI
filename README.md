@@ -8,7 +8,7 @@ Plataforma de inteligência e análise para exportação. Este repositório cent
 
 O **ExportAI** é composto por serviços e módulos independentes:
 
-| Módulo | Descrição | Repositório |
+| Módulo | Repositório |
 | :--- | :--- | :--- |
 | ⚡ **Backend Principal** | *(Este repositório)* |
 | 📊 **Módulo de Vendas**  | [GustavoSchwabeRazera/ModuloVendas](https://github.com/GustavoSchwabeRazera/ModuloVendas) |
