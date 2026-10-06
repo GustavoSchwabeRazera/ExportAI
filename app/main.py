@@ -6,6 +6,7 @@ from app.errors import registrar_tratadores_erros
 from app.observability import configurar_logging, registrar_middleware_observabilidade
 from app.routes.catalogos import router as catalogos_router
 from app.routes.health import router as health_router
+from app.routes.produtos import router as produtos_router
 from app.routes.recomendacoes import router as recomendacoes_router
 
 configurar_logging()
@@ -26,6 +27,7 @@ registrar_middleware_observabilidade(app)
 registrar_tratadores_erros(app)
 app.include_router(health_router)
 app.include_router(catalogos_router)
+app.include_router(produtos_router)
 app.include_router(recomendacoes_router)
 
 
