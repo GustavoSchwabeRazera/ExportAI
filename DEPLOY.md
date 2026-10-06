@@ -1,5 +1,25 @@
 # Deploy do ExportAI Backend
 
+## Associação de produtos com IA
+
+A rota existente `GET /api/v1/produtos?q=...` usa a busca local primeiro.
+Quando não há uma correspondência local forte, pode consultar o Groq para
+traduzir nomes populares em termos técnicos e selecionar candidatos reais.
+Utiliza `GROQ_API_KEY` e `GROQ_MODEL` já configurados no backend; a chave não
+deve ser colocada no Lovable. Para desativar, defina
+`EXPORTAI_BUSCA_IA_ENABLED=false`. O timeout por chamada é configurado por
+`EXPORTAI_BUSCA_IA_TIMEOUT_SECONDS` (padrão: 4 segundos); uma busca pode fazer
+duas chamadas. Resultados são armazenados em cache por aproximadamente uma
+hora, limitado a 256 consultas por processo. Falhas mantêm a busca local e
+pausam o provedor por 30 segundos. Apenas uma consulta de IA ocorre por vez
+em cada processo, e as demais continuam pela busca local.
+
+NCM, HS6 e descrições retornados são sempre lidos do catálogo. A IA só pode
+selecionar candidatos fornecidos pelo backend. A existência do código é
+validada, mas a associação continua sendo uma sugestão de pesquisa e exige
+que o usuário confira a descrição e as características do produto.
+Nenhum score de exportação é modificado por essa associação.
+
 ## Validacao local sem Docker
 
 ```powershell

@@ -18,6 +18,7 @@ from app.config import BASE_CONSULTA, CATALOGO_HS6, DATA_DIR, INDICE_NCM_HS6
 from app.presentation import nome_pais_portugues
 from app.schemas import ErroResponse
 from app.busca_produtos import BuscaCatalogo
+from app.services.associador_produtos_ia import AssociadorProdutosIA
 
 router = APIRouter(prefix="/api/v1", tags=["Catalogos"])
 
@@ -153,6 +154,12 @@ def carregar_busca_produtos() -> BuscaCatalogo:
     return BuscaCatalogo(carregar_catalogo_produtos()["descricao_busca"].tolist())
 
 
+@lru_cache(maxsize=1)
+def carregar_associador_produtos() -> AssociadorProdutosIA:
+    registros = carregar_catalogo_produtos()[["NCM", "descricao_ncm"]].to_dict(orient="records")
+    return AssociadorProdutosIA(carregar_busca_produtos(), registros)
+
+
 @router.get(
     "/paises",
     response_model=ListaPaisesResponse,
@@ -202,6 +209,8 @@ def buscar_produtos(
             return BuscaProdutosResponse(total=0, resultados=[])
         else:
             correspondencias = carregar_busca_produtos().buscar(termo)
+            if not codigo_numerico:
+                correspondencias = carregar_associador_produtos().buscar(termo, correspondencias)
             if not correspondencias:
                 return BuscaProdutosResponse(total=0, resultados=[])
             candidatos = produtos.iloc[[posicao for posicao, _ in correspondencias]].copy()

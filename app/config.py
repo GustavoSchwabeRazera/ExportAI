@@ -30,6 +30,8 @@ AI_TIMEOUT_SECONDS = float(os.getenv("EXPORTAI_AI_TIMEOUT_SECONDS", "12"))
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+BUSCA_IA_ENABLED = os.getenv("EXPORTAI_BUSCA_IA_ENABLED", "true").lower() in {"1", "true", "yes"}
+BUSCA_IA_TIMEOUT_SECONDS = float(os.getenv("EXPORTAI_BUSCA_IA_TIMEOUT_SECONDS", "4"))
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5")
