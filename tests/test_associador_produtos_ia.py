@@ -72,6 +72,13 @@ def test_ia_sem_candidato_compativel_nao_cria_produto(monkeypatch):
     assert servico.buscar("salame artesanal", []) == []
 
 
+def test_ia_rejeita_correspondencias_locais_fracas(monkeypatch):
+    servico = associador(monkeypatch)
+    respostas = iter([{"buscas": []}, {"ids": []}])
+    monkeypatch.setattr(servico, "_chamar", lambda *args: next(respostas))
+    assert servico.buscar("enchidos desconhecidos", [(0, 0.6)]) == []
+
+
 def test_rota_retorna_ncm_e_descricao_originais_do_catalogo(monkeypatch):
     from app.routes import catalogos
 

@@ -93,7 +93,7 @@ class AssociadorProdutosIA:
         try:
             ids = self._resolver(consulta, int(monotonic() // 3600))
             # Todas as descrições serão montadas pela rota a partir do catálogo.
-            return [(p, 2.0 - numero / 100) for numero, p in enumerate(ids)] if ids else locais
+            return [(p, 2.0 - numero / 100) for numero, p in enumerate(ids)]
         except Exception as exc:
             self.pausa_ate = monotonic() + 30
             # Não registrar chave, consulta ou corpo de resposta do provedor.

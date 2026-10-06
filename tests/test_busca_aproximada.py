@@ -47,3 +47,14 @@ def test_negacao_na_descricao_nao_recebe_mesma_prioridade():
 def test_plural_existente_nao_expande_para_outro_produto():
     busca = motor("Camisetas de algodão", "Camisas de algodão")
     assert [p for p, _ in busca.buscar("camiseta algodao")] == [0]
+
+
+def test_palavra_parecida_nao_equivale_a_produto_similar():
+    busca = motor("Açafrão", "Painel de vidro máscara de sombra")
+    assert not any(t in busca.alternativas("macarrao", False) for t in ("acafrao", "mascara"))
+    assert busca.buscar("macarrão") == []
+
+
+def test_macarrao_recupera_massas_e_exclui_produtos_sem_relacao():
+    busca = motor("Açafrão", "Painel máscara de sombra", "Massas alimentícias que contenham ovos", "Máquinas para empacotamento de massas alimentícias")
+    assert [p for p, _ in busca.buscar("macarrão")] == [2]

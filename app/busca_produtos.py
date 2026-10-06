@@ -33,6 +33,8 @@ GRUPOS = (
 
 # Expressões técnicas que não compartilham palavras com o nome popular.
 EXPRESSOES = {
+    "macarrao": "massas alimenticias",
+    "macarroes": "massas alimenticias",
     "notebook": "processamento dados portateis",
     "notebooks": "processamento dados portateis",
     "laptop": "processamento dados portateis",
@@ -46,6 +48,28 @@ def normalizar(texto: str) -> str:
     texto = unicodedata.normalize("NFKD", texto.casefold())
     texto = "".join(c for c in texto if not unicodedata.combining(c))
     return re.sub(r"[^a-z0-9]+", " ", texto).strip()
+
+
+def erro_de_digitacao_proximo(original: str, candidato: str) -> bool:
+    """Aceita uma troca, inserção, remoção ou inversão de letras adjacentes.
+
+    Similaridade percentual sozinha confunde palavras de produtos distintos.
+    """
+    if abs(len(original) - len(candidato)) > 1:
+        return False
+    if len(original) == len(candidato):
+        diferentes = [i for i, (a, b) in enumerate(zip(original, candidato)) if a != b]
+        if len(diferentes) <= 1:
+            return True
+        if len(diferentes) == 2:
+            i, j = diferentes
+            return j == i + 1 and original[i] == candidato[j] and original[j] == candidato[i]
+        return False
+    curto, longo = sorted((original, candidato), key=len)
+    for i in range(len(longo)):
+        if longo[:i] + longo[i + 1:] == curto:
+            return True
+    return False
 
 
 class BuscaCatalogo:
@@ -77,7 +101,8 @@ class BuscaCatalogo:
         # Termos curtos não recebem correção difusa: evita falsas associações.
         if len(palavra) >= 4 and not any(termo in self.indice for termo in candidatos):
             for termo in get_close_matches(palavra, self.vocabulario, n=4, cutoff=0.8 if len(palavra) >= 5 else 0.85):
-                candidatos[termo] = max(candidatos.get(termo, 0), 0.75 * SequenceMatcher(None, palavra, termo).ratio())
+                if erro_de_digitacao_proximo(palavra, termo):
+                    candidatos[termo] = max(candidatos.get(termo, 0), 0.75 * SequenceMatcher(None, palavra, termo).ratio())
         return candidatos
 
     def buscar(self, consulta: str) -> list[tuple[int, float]]:
@@ -103,6 +128,10 @@ class BuscaCatalogo:
         resultado = []
         for posicao, valores in candidatos:
             descricao = self.descricoes[posicao]
+            # A máquina que fabrica/embala o produto não é o produto buscado.
+            if ("maquinas" in descricao.split()[:3]
+                    and not set(palavras) & {"maquina", "maquinas", "processamento", "computador", "computadores"}):
+                continue
             nota = sum(valores) / len(palavras)
             inicio = set(descricao.split()[:2])
             nota += 0.15 * sum(bool(inicio & set(self.alternativas(p, False))) for p in palavras) / len(palavras)
