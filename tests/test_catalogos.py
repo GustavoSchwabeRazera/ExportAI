@@ -75,6 +75,19 @@ def test_busca_produtos_por_descricao():
     assert "Camisetas" in sugestao["descricao"]
 
 
+def test_busca_produtos_por_sinonimo_linguica():
+    resposta = client.get("/api/v1/produtos", params={"q": "linguiça e embutidos"})
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["total"] >= 1
+
+    sugestao = corpo["resultados"][0]
+    assert sugestao["tipo_codigo"] == "NCM"
+    assert sugestao["codigo"] == "16010000"
+    assert sugestao["hs6"] == "160100"
+    assert "Enchidos" in sugestao["descricao"]
+
+
 def test_busca_produtos_por_ncm():
     resposta = client.get("/api/v1/produtos", params={"q": "09.01.11.10"})
     assert resposta.status_code == 200

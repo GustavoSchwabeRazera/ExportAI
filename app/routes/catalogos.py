@@ -17,6 +17,7 @@ from app.catalog_schemas import (
 from app.config import BASE_CONSULTA, CATALOGO_HS6, DATA_DIR, INDICE_NCM_HS6
 from app.presentation import nome_pais_portugues
 from app.schemas import ErroResponse
+from app.busca_produtos import BuscaCatalogo
 
 router = APIRouter(prefix="/api/v1", tags=["Catalogos"])
 
@@ -147,6 +148,11 @@ def montar_sugestao_produto(linha: pd.Series, tipo_codigo: str) -> ProdutoSugest
     )
 
 
+@lru_cache(maxsize=1)
+def carregar_busca_produtos() -> BuscaCatalogo:
+    return BuscaCatalogo(carregar_catalogo_produtos()["descricao_busca"].tolist())
+
+
 @router.get(
     "/paises",
     response_model=ListaPaisesResponse,
@@ -183,31 +189,23 @@ def buscar_produtos(
         termo = normalizar_texto_busca(q)
         digitos = re.sub(r"\D", "", q)
 
-        if len(digitos) == 8:
+        codigo_numerico = bool(re.fullmatch(r"[\d.\s-]+", q.strip()))
+        if codigo_numerico and len(digitos) == 8:
             candidatos = produtos.loc[produtos["NCM"].eq(digitos)].copy()
             candidatos["prioridade_busca"] = 0
             tipo_codigo = "NCM"
-        elif len(digitos) == 6:
+        elif codigo_numerico and len(digitos) == 6:
             candidatos = produtos.loc[produtos["HS6"].eq(digitos)].copy()
             candidatos["prioridade_busca"] = 0
             tipo_codigo = "HS6"
         elif len(termo) < 2:
             return BuscaProdutosResponse(total=0, resultados=[])
         else:
-            termos = termo.split()
-            mascara = pd.Series(True, index=produtos.index)
-            for palavra in termos:
-                mascara = mascara & produtos["descricao_busca"].str.contains(
-                    re.escape(palavra),
-                    na=False,
-                    regex=True,
-                )
-            candidatos = produtos.loc[mascara].copy()
-            if candidatos.empty:
+            correspondencias = carregar_busca_produtos().buscar(termo)
+            if not correspondencias:
                 return BuscaProdutosResponse(total=0, resultados=[])
-            candidatos["prioridade_busca"] = candidatos["descricao_busca"].map(
-                lambda descricao: 0 if descricao.startswith(termo) else 1
-            )
+            candidatos = produtos.iloc[[posicao for posicao, _ in correspondencias]].copy()
+            candidatos["prioridade_busca"] = [-nota for _, nota in correspondencias]
             tipo_codigo = "NCM"
 
         candidatos = candidatos.sort_values(
